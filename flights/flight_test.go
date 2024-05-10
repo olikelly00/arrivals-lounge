@@ -61,35 +61,10 @@ func TestTerminalOutput(t *testing.T) {
 // 	}
 // }
 
-// func TestReadfromJSON(t *testing.T) {
-// 	result := ReadfromJSON("/Users/olikelly/Documents/Coding/arrivals-lounge/testFile.json")
-// 	expected := []Flight{
-// 		{"BA 114", "London", time.Date(2024, 5, 15, 16, 23, 00, 000, time.UTC), time.Time{}, false, time.Date(2024, 3, 14, 13, 8, 10, 000, time.UTC)},
-// 		{"LH 888", "Berlin", time.Date(2024, 5, 15, 17, 24, 00, 000, time.UTC), time.Time{}, true, time.Time{}},
-// 		{"JA 903", "Tokyo", time.Date(2024, 5, 15, 18, 20, 00, 000, time.UTC), time.Time{}, false, time.Date(2024, 3, 14, 13, 3, 40, 000, time.UTC)},
-// 	}
-// 	if !reflect.DeepEqual(result, expected) {
-// 		t.Errorf("result is %v but %v was expected", result, expected)
-// 	}
-// }
-
-// func TestGetArrivals(t *testing.T) {
-// 	req, err := http.NewRequest("GET", "https://go-flights-api.onrender.com/flights?code=JFK", nil)
-// 	if err != nil{
-// 		fmt.Println(err)
-// 	}
-// 	rr := httptest.NewRecorder()
-// 	GetArrivals.ServeHTTP(rr, req)
-// 	if status := rr.Code; status != http.StatusOK {
-//         t.Errorf("handler returned wrong status code: got %v want %v",
-//             status, http.StatusOK)
-//     }
-// }
-
 func TestGetArrivals(t *testing.T) {
 	os.Setenv("API_KEY", "test")
 	// Create a mock HTTP server
-	//var receivedReq *http.Request
+	var receivedReq *http.Request
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		//Store the received request
 		receivedReq = req
@@ -107,9 +82,9 @@ func TestGetArrivals(t *testing.T) {
 	// Call your function
 	GetArrivals(server.URL)
 
-	// if receivedReq.URL.String() != server.URL {
-	// 	t.Errorf("wrong URL, got: %s, want: %s", receivedReq.URL.String(), server.URL)
-	// }
+	if receivedReq.URL.String() != server.URL {
+		t.Errorf("wrong URL, got: %s, want: %s", receivedReq.URL.String(), server.URL)
+	}
 
 	// Check if function's http response was valid
 	resp, err := http.Get(server.URL)
