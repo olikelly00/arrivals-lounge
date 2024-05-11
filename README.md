@@ -22,7 +22,7 @@ To run Arrivals Lounge locally, you'll need to install [Golang](https://go.dev/)
 
 2. Go to the project directory `cd arrivals-lounge`
 
-3. Install dependencies  ` 
+3. Install dependencies 
 
 4. Run the backend server `go run main.go + IATA code`
 
@@ -31,6 +31,7 @@ To run Arrivals Lounge locally, you'll need to install [Golang](https://go.dev/)
 ## Project Structure 
 
 **Root directory**
+
 main.go
 - The entry point of our program - this is the file you run in CLI that all other files feed into.
 
@@ -44,6 +45,7 @@ README.md
 - The one you're reading!
 
 **Flights package**
+
 flights.go
 - Houses the flight 'model' (struct), which defines the properties of the flights allowing for manipulaton within the application. 
 - Also includes the Display function, which takes the flight data received from the API and formats it into a board for the user.
