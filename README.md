@@ -1,3 +1,5 @@
+<h1>Arrivals Lounge</h1>
+
 Welcome to the README for Arrivals Lounge. This repo contains the codebase for Arrivals Lounge, built from scratch by Oli Kelly. 
 
 ## Description
