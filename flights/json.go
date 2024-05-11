@@ -24,58 +24,51 @@ type JSONFlight struct {
 	} `json:"flights"`
 }
 
-func GetArrivals(code string) []Flight {
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
+func GetArrivals(baseURL, code string) ([]Flight, error) {
 	var flights []Flight
 	apiKey := os.Getenv("API_KEY")
 	if apiKey == "" {
 		fmt.Println("API key is not set. Please set the API_KEY environment variable.")
 	}
-	apiURL := "https://go-flights-api.onrender.com/flights?code=" + code
+	apiURL := baseURL + "/flights?code=" + code
 	request, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
-	for {
-		select {
-		case <-ticker.C:
-			request.Header.Set("x-makers-password", apiKey)
-			request.Header.Set("Content-Type", "application/json; charset=utf-8")
+	request.Header.Set("x-makers-password", apiKey)
+	request.Header.Set("Content-Type", "application/json; charset=utf-8")
 
-			client := &http.Client{}
-			response, err := client.Do(request)
-			if err != nil {
-				log.Fatalf("Unable to send http request due to %s", err)
-			}
-			defer response.Body.Close()
-
-			responseBody, responsebodyError := io.ReadAll(response.Body)
-			if responsebodyError != nil {
-				log.Fatalf("Unable to read response body due to %s", responsebodyError)
-			}
-			var wrapper JSONFlight
-			unmarshallingError := json.Unmarshal(responseBody, &wrapper)
-			if unmarshallingError != nil {
-				log.Fatalf("Unable to unmarshal JSON due to %s", unmarshallingError)
-			}
-
-			for _, flight := range wrapper.Flights {
-				dueTime, _ := time.Parse(time.RFC3339, flight.ScheduledArrival)
-				arrivedAt, _ := time.Parse(time.RFC3339, flight.Status.Arrived)
-				expectedAt, _ := time.Parse(time.RFC3339, flight.Status.ExpectedAt)
-				flights = append(flights, Flight{
-					Origin:     flight.From,
-					Code:       flight.Code,
-					DueTime:    dueTime.Local(),
-					ArrivedAt:  arrivedAt.Local(),
-					Cancelled:  flight.Status.Cancelled,
-					ExpectedAt: expectedAt.Local(),
-				})
-			}
-			return flights
-		}
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Fatalf("Unable to send http request due to %s", err)
 	}
+	defer response.Body.Close()
+
+	responseBody, responsebodyError := io.ReadAll(response.Body)
+	if responsebodyError != nil {
+		log.Fatalf("Unable to read response body due to %s", responsebodyError)
+	}
+	var wrapper JSONFlight
+	unmarshallingError := json.Unmarshal(responseBody, &wrapper)
+	if unmarshallingError != nil {
+		log.Fatalf("Unable to unmarshal JSON due to %s", unmarshallingError)
+	}
+
+	for _, flight := range wrapper.Flights {
+		dueTime, _ := time.Parse(time.RFC3339, flight.ScheduledArrival)
+		arrivedAt, _ := time.Parse(time.RFC3339, flight.Status.Arrived)
+		expectedAt, _ := time.Parse(time.RFC3339, flight.Status.ExpectedAt)
+		flights = append(flights, Flight{
+			Origin:     flight.From,
+			Code:       flight.Code,
+			DueTime:    dueTime.Local(),
+			ArrivedAt:  arrivedAt.Local(),
+			Cancelled:  flight.Status.Cancelled,
+			ExpectedAt: expectedAt.Local(),
+		})
+	}
+	return flights, nil
 }
 
 // ```

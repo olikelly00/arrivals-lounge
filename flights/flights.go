@@ -16,7 +16,7 @@ type Flight struct {
 	ExpectedAt time.Time `json:"expected_at"`
 }
 
-func Display(flights []Flight) {
+func Display(flights []Flight, err error) {
 	headerFmt := color.New(color.FgYellow, color.Underline).SprintfFunc()
 	columnFmt := color.New(color.FgYellow).SprintfFunc()
 

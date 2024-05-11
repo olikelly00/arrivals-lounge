@@ -8,6 +8,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestFlightStructConstructs(t *testing.T) {
@@ -45,55 +47,40 @@ func TestTerminalOutput(t *testing.T) {
 	}
 }
 
-// func TestDisplay(t *testing.T) {
-// 	//If I have three flights and I want to call the Display function on them,I would expect for the table to have 7 columns,4 rows.
-
-// 	TestFlights := []Flight{
-// 		{"BA 114", "London", time.Date(2024, 5, 15, 16, 23, 00, 000, time.Local), time.Date(2024, 5, 15, 18, 20, 00, 000, time.Local), false, time.Date(2024, 5, 15, 18, 20, 00, 000, time.Local)},
-// 		{"LH 888", "Berlin", time.Date(2024, 5, 15, 17, 24, 00, 000, time.Local), time.Date(2024, 5, 15, 18, 20, 00, 000, time.Local), false, time.Date(2024, 5, 15, 18, 20, 00, 000, time.Local)},
-// 		{"JA 903", "Tokyo", time.Date(2024, 5, 15, 18, 20, 00, 000, time.Local), time.Date(2024, 5, 15, 18, 20, 00, 000, time.Local), false, time.Date(2024, 5, 15, 18, 20, 00, 000, time.Local)},
-// 	}
-
-// 	result := Display(TestFlights)
-// 	expected := "Time From Code Status\n16:23 London BA 114 18:20 false 18:20\n17:24 Berlin LH 888 18:20 false 18:20\n18:20 Tokyo JA 903 18:20 false 18:20"
-// 	if result != expected {
-// 		t.Errorf("result is %v but %v was expected", result, expected)
-// 	}
-// }
-
 func TestGetArrivals(t *testing.T) {
 	os.Setenv("API_KEY", "test")
-	// Create a mock HTTP server
-	var receivedReq *http.Request
-	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		//Store the received request
-		receivedReq = req
-		// Print the received request
-		fmt.Printf("Received request: %v\n", req)
-		// Send response to be tested
+
+	var server = httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 
 		rw.WriteHeader(http.StatusOK)
-		rw.Write([]byte(`OK`))
+		rw.Write([]byte(`{
+			"flights": [
+				{
+					"from": "London",
+					"code": "testCode",
+					"scheduledArrival": "2022-01-01T00:00:00Z",
+					"status": {
+						"arrived": "2022-01-01T00:00:00Z",
+						"expected_at": "2022-01-01T00:00:00Z",
+						"cancelled": false
+					}
+				}
+			]
+		}`))
 	}))
-
-	// Close the server when test finishes
 	defer server.Close()
+	flights, err := GetArrivals(server.URL, "testCode")
 
-	// Call your function
-	GetArrivals(server.URL)
+	require.NoError(t, err, "failed to get arrivals")
+	require.Equal(t, 1, len(flights), "expected 1 flight")
+	require.Equal(t, "London", flights[0].Origin, "origin does not match")
+	require.Equal(t, "testCode", flights[0].Code, "arrival code does not match")
 
-	if receivedReq.URL.String() != server.URL {
-		t.Errorf("wrong URL, got: %s, want: %s", receivedReq.URL.String(), server.URL)
-	}
+	testArrivalTime := time.Date(2022, time.January, 1, 0, 0, 0, 0, time.Local)
+	require.Equal(t, testArrivalTime, flights[0].ArrivedAt.Local(), "arrival time does not match")
 
-	// Check if function's http response was valid
-	resp, err := http.Get(server.URL)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("wrong status code, got: %d, want: %d", resp.StatusCode, http.StatusOK)
-	}
+	testExpectedArrivalTime := time.Date(2022, time.January, 1, 0, 0, 0, 0, time.Local)
+	require.Equal(t, testExpectedArrivalTime, flights[0].ExpectedAt.Local(), "expected arrival time does not match")
+	require.Equal(t, false, flights[0].Cancelled, "cancellation status does not match")
+	require.NoError(t, err, "failed to decode response body")
 }
