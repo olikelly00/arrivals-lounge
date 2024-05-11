@@ -43,6 +43,9 @@ func GetArrivals(baseURL, code string) ([]Flight, error) {
 	if err != nil {
 		log.Fatalf("Unable to send http request due to %s", err)
 	}
+	if response.StatusCode != http.StatusOK {
+		log.Fatalf("Received non-200 response: %d", response.StatusCode)
+	}
 	defer response.Body.Close()
 
 	responseBody, responsebodyError := io.ReadAll(response.Body)
